@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Samhati Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --surface3: #222638;
+    --border: #2a2f42;
+    --border2: #353b52;
+    --text: #e8eaf0;
+    --text2: #8b90a8;
+    --text3: #5a5f78;
+    --accent: #4f7cff;
+    --accent-dim: rgba(79,124,255,0.12);
+    --green: #22c97a;
+    --green-dim: rgba(34,201,122,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --red: #f05252;
+    --red-dim: rgba(240,82,82,0.12);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --rail: #f5a623;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 13px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo {
+    width: 34px; height: 34px; background: var(--rail);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: #0d0f14; flex-shrink: 0;
+    font-family: var(--mono);
+  }
+  .brand { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .brand span { color: var(--rail); }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .last-update {
+    font-size: 11px; color: var(--text3);
+    font-family: var(--mono);
+  }
+  .search-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    width: 200px;
+    transition: border-color .15s;
+  }
+  .search-box:focus { outline: none; border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text3); }
+
+  .btn {
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--sans);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .btn-ghost { background: transparent; color: var(--text2); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { opacity: .85; }
+  .btn-refresh { background: var(--surface2); color: var(--text2); }
+  .btn-refresh:hover { color: var(--text); }
+  .btn-refresh.spinning svg { animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MAIN LAYOUT ── */
+  .main { display: flex; height: calc(100vh - 57px); overflow: hidden; }
+
+  /* ── SIDEBAR NAV ── */
+  .sidenav {
+    width: 52px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .nav-icon {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text3);
+    transition: all .15s;
+    position: relative;
+  }
+  .nav-icon:hover, .nav-icon.active { background: var(--surface3); color: var(--accent); }
+  .nav-icon svg { width: 18px; height: 18px; }
+
+  /* ── CONTENT AREA ── */
+  .content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* ── KPI ROW ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .kpi.kpi-green::before { background: var(--green); }
+  .kpi.kpi-blue::before { background: var(--accent); }
+  .kpi.kpi-amber::before { background: var(--amber); }
+  .kpi.kpi-red::before { background: var(--red); }
+  .kpi.kpi-purple::before { background: var(--purple); }
+  .kpi.kpi-rail::before { background: var(--rail); }
+  .kpi-label { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .kpi-val { font-size: 26px; font-weight: 600; font-family: var(--mono); line-height: 1; }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.purple { color: var(--purple); }
+  .kpi-val.rail { color: var(--rail); }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .filter-label { font-size: 11px; color: var(--text3); font-weight: 500; margin-right: 2px; }
+  .filter-chip {
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text2);
+    background: transparent;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .filter-chip:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+  .filter-chip.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+  /* ── PANELS ROW ── */
+  .panels-row { display: grid; grid-template-columns: 1fr 300px; gap: 14px; }
+  @media(max-width: 900px) { .panels-row { grid-template-columns: 1fr; } }
+
+  /* ── BOARD ── */
+  .board-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .board-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+  .board-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+  }
+
+  /* ── TICKET CARD ── */
+  .ticket {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px;
+    cursor: pointer;
+    transition: border-color .15s, transform .1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ticket:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .ticket.selected { border-color: var(--accent); border-width: 1.5px; }
+  .ticket::after {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  }
+  .ticket.st-completed::after { background: var(--green); }
+  .ticket.st-inprogress::after { background: var(--accent); }
+  .ticket.st-yettostart::after { background: var(--amber); }
+
+  .ticket-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .ticket-id { font-family: var(--mono); font-size: 10px; color: var(--accent); font-weight: 500; }
+  .badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 12px;
+    white-space: nowrap;
+  }
+  .badge-completed { background: var(--green-dim); color: var(--green); }
+  .badge-inprogress { background: var(--accent-dim); color: var(--accent); }
+  .badge-yettostart { background: var(--amber-dim); color: var(--amber); }
+  .badge-other { background: var(--surface3); color: var(--text2); }
+
+  .ticket-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 5px; line-height: 1.35; }
+  .ticket-meta { font-size: 11px; color: var(--text3); margin-bottom: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .meta-tag {
+    background: var(--surface2); border-radius: 4px; padding: 2px 6px;
+    font-size: 10px; color: var(--text2);
+  }
+
+  .prog-wrap { margin-bottom: 8px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+  .prog-bar { height: 3px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+  .prog-green { background: var(--green); }
+  .prog-amber { background: var(--amber); }
+  .prog-blue { background: var(--accent); }
+  .prog-gray { background: var(--surface3); }
+
+  .ticket-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .ticket-amount { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
+  .pg-dot { font-size: 10px; display: flex; align-items: center; gap: 4px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-red { background: var(--red); }
+
+  .alert-banner {
+    background: var(--red-dim);
+    border: 1px solid rgba(240,82,82,.25);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: var(--red);
+    margin-bottom: 7px;
+    display: flex; align-items: center; gap-5px;
+  }
+
+  .ticket-pm { font-size: 10px; color: var(--text3); margin-top: 5px; }
+
+  /* ── RIGHT PANEL ── */
+  .right-col { display: flex; flex-direction: column; gap: 12px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .panel-head {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .panel-head svg { width: 14px; height: 14px; opacity: .6; }
+  .panel-body { padding: 12px 14px; }
+
+  /* Alerts */
+  .alert-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .alert-content {}
+  .alert-title { font-size: 12px; font-weight: 500; color: var(--text); }
+  .alert-sub { font-size: 11px; color: var(--text3); margin-top: 1px; font-family: var(--mono); }
+
+  /* Detail Panel */
+  .detail-section-head {
+    font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text3); margin: 12px 0 6px; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; border-bottom: 1px solid rgba(42,47,66,.5); }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key { color: var(--text3); }
+  .detail-val { color: var(--text); font-weight: 500; text-align: right; max-width: 58%; word-break: break-word; }
+  .detail-val.green { color: var(--green); }
+  .detail-val.amber { color: var(--amber); }
+  .detail-val.red { color: var(--red); }
+  .detail-val.mono { font-family: var(--mono); }
+  .detail-placeholder { font-size: 12px; color: var(--text3); text-align: center; padding: 20px 0; line-height: 1.6; }
+
+  /* Add ticket form */
+  .form-row { margin-bottom: 10px; }
+  .form-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; display: block; font-weight: 500; }
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    transition: border-color .15s;
+  }
+  .form-input:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text3); }
+  .form-select option { background: var(--surface2); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.65);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(2px);
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 20px;
+    width: 340px;
+    max-width: 92vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+
+  /* Empty / Loading */
+  .empty { text-align: center; padding: 50px 20px; color: var(--text3); font-size: 13px; }
+  .empty svg { width: 36px; height: 36px; margin-bottom: 10px; opacity: .3; }
+
+  /* Add card */
+  .add-card {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    cursor: pointer; color: var(--text3); font-size: 12px;
+    transition: all .15s; min-height: 100px;
+  }
+  .add-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .add-card svg { width: 20px; height: 20px; }
+
+  /* ── FUTURE ALERTS ── */
+  .future-alert-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .future-alert-item:last-child { border-bottom: none; }
+  .fa-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .fa-dot-blue   { background: var(--accent); }
+  .fa-dot-green  { background: var(--green); }
+  .fa-dot-amber  { background: var(--amber); }
+  .fa-dot-purple { background: var(--purple); }
+  .fa-body { flex: 1; min-width: 0; }
+  .fa-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.35; }
+  .fa-meta  { font-size: 10px; color: var(--text3); margin-top: 2px; font-family: var(--mono); display: flex; gap: 8px; flex-wrap: wrap; }
+  .fa-zone-tag {
+    background: var(--surface3); border-radius: 3px; padding: 1px 5px;
+    font-size: 10px; color: var(--text2);
+  }
+  .fa-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .fa-btn {
+    background: none; border: none; cursor: pointer; padding: 3px 5px;
+    border-radius: 4px; color: var(--text3); transition: all .15s;
+    font-size: 11px; line-height: 1;
+  }
+  .fa-btn:hover { background: var(--surface3); color: var(--text); }
+  .fa-btn.del:hover { color: var(--red); }
+  .fa-add-btn {
+    width: 100%; margin-top: 10px; background: var(--surface2);
+    border: 1px dashed var(--border2); border-radius: var(--radius-sm);
+    padding: 7px; font-size: 11px; color: var(--text3); cursor: pointer;
+    font-family: var(--sans); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .fa-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .fa-empty { font-size: 11px; color: var(--text3); text-align: center; padding: 14px 0; }
+
+  /* Future Alert Modal */
+  .fa-modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.65);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300; backdrop-filter: blur(2px);
+  }
+  .fa-modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 20px; width: 340px;
+    max-width: 92vw;
+  }
+  .fa-modal-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+
+  /* mobile */
+  @media(max-width: 640px) {
+    .sidenav { display: none; }
+    .search-box { width: 140px; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .panels-row { grid-template-columns: 1fr; }
+  }
+
+  /* Status bar */
+  .status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 5px 20px;
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; color: var(--text3); font-family: var(--mono);
+    z-index: 50;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-live { background: var(--green); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .progress-ring { display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">S</div>
+    <div>
+      <div class="brand">Samhati <span>Command Center</span></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdate">Loading...</span>
+    <input class="search-box" type="text" id="searchInput" placeholder="Search project, PM, zone..." oninput="applyFilters()">
+    <button class="btn btn-refresh" id="refreshBtn" onclick="fetchData(true)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-primary" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14"/></svg>
+      New Ticket
+    </button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- SIDENAV -->
+  <div class="sidenav">
+    <div class="nav-icon active" id="nav-dashboard" title="Dashboard" onclick="switchView('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
+    <div class="nav-icon" id="nav-contracts" title="All Contracts List" onclick="switchView('contracts')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <div class="nav-icon" id="nav-finance" title="Finance Summary" onclick="switchView('finance')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    </div>
+    <div class="nav-icon" id="nav-team" title="Team View" onclick="switchView('team')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi kpi-green"><div class="kpi-label">Completed</div><div class="kpi-val green" id="k-completed">—</div><div class="kpi-sub">contracts</div></div>
+      <div class="kpi kpi-blue"><div class="kpi-label">In Progress</div><div class="kpi-val blue" id="k-inprog">—</div><div class="kpi-sub">active now</div></div>
+      <div class="kpi kpi-amber"><div class="kpi-label">Yet to Start</div><div class="kpi-val amber" id="k-yts">—</div><div class="kpi-sub">scheduled</div></div>
+      <div class="kpi kpi-rail"><div class="kpi-label">Total Value</div><div class="kpi-val rail" id="k-total">—</div><div class="kpi-sub" id="k-billed-sub">billed —</div></div>
+      <div class="kpi kpi-blue"><div class="kpi-label">Total PG Value</div><div class="kpi-val blue" id="k-pg-total">—</div><div class="kpi-sub" id="k-sd-sub">SD: —</div></div>
+      <div class="kpi kpi-red"><div class="kpi-label">PG Pending</div><div class="kpi-val red" id="k-pgpend">—</div><div class="kpi-sub" id="k-pg-sub">need action</div></div>
+      <div class="kpi kpi-purple"><div class="kpi-label">Balance Due</div><div class="kpi-val purple" id="k-balance">—</div><div class="kpi-sub">to collect</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar" id="filterBar">
+      <span class="filter-label">Filter</span>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panels-row">
+
+      <!-- BOARD -->
+      <div>
+        <div class="board-header">
+          <span class="board-title">Contract Tickets</span>
+          <span class="board-count" id="boardCount">0 shown</span>
+        </div>
+        <div class="board-grid" id="boardGrid">
+          <div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Loading contracts...</div>
+        </div>
+      </div>
+
+      <!-- RIGHT COL -->
+      <div class="right-col">
+
+        <!-- ALERTS -->
+        <div class="panel">
+          <div class="panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Action Required
+          </div>
+          <div class="panel-body" id="alertsPanel">
+            <div class="detail-placeholder">Loading alerts...</div>
+          </div>
+        </div>
+
+        <!-- FUTURE ALERTS -->
+        <div class="panel">
+          <div class="panel-head" style="justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Upcoming / Watch List
+            </div>
+            <span id="fa-count" style="font-size:10px;font-family:var(--mono);color:var(--text3);font-weight:400"></span>
+          </div>
+          <div class="panel-body" id="futureAlertsPanel">
+            <div class="fa-empty">No upcoming alerts</div>
+            <button class="fa-add-btn" onclick="openFAModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path d="M12 5v14M5 12h14"/></svg>
+              Add Alert
+            </button>
+          </div>
+        </div>
+
+        <!-- DETAIL -->
+        <div class="panel">
+          <div class="panel-head">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+            Ticket Detail
+          </div>
+          <div class="panel-body" id="detailPanel">
+            <div class="detail-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;margin:0 auto 8px;display:block;opacity:.3"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+              Click any ticket<br>to view full details
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FINANCE VIEW (hidden by default) -->
+  <div id="view-finance" style="display:none;padding:16px;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Finance Summary</div>
+    <div id="finance-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:4px"></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <div style="padding:11px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between">
+        <span>All Contracts — Financial Overview</span>
+        <span id="fin-total-label" style="font-family:var(--mono);color:var(--rail)"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="financeTable" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTRACTS LIST VIEW (hidden by default) -->
+  <div id="view-contracts" style="display:none;padding:16px;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">All Contracts</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <div style="overflow-x:auto">
+        <table id="contractsTable" style="width:100%;border-collapse:collapse;font-size:12px"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM VIEW (hidden by default) -->
+  <div id="view-team" style="display:none;padding:16px;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+    <div style="font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Team View</div>
+    <div id="teamGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-dot status-live"></div>
+  <span id="statusText">Connecting to Google Sheet...</span>
+  <span style="margin-left:auto">Auto-refresh every 5 min</span>
+  <span id="nextRefreshText"></span>
+</div>
+
+<!-- ADD TICKET MODAL -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title">New Contract Ticket</div>
+    <div class="form-row"><label class="form-label">Project Name *</label><input class="form-input" id="f-name" placeholder="e.g. Paint Workshop Avadi"></div>
+    <div class="form-row"><label class="form-label">Type</label>
+      <select class="form-select" id="f-type"><option>Open Bid</option><option>BQ</option><option>Others</option></select></div>
+    <div class="form-row"><label class="form-label">Zone</label>
+      <select class="form-select" id="f-zone"><option>ICF</option><option>SCR</option><option>SR</option><option>MCF</option><option>Other</option></select></div>
+    <div class="form-row"><label class="form-label">Location</label><input class="form-input" id="f-loc" placeholder="e.g. ICF Furnishing, Chennai"></div>
+    <div class="form-row"><label class="form-label">PM Name</label><input class="form-input" id="f-pm" placeholder="e.g. Harish"></div>
+    <div class="form-row"><label class="form-label">POA</label><input class="form-input" id="f-poa" placeholder="e.g. MD"></div>
+    <div class="form-row"><label class="form-label">Total Amount (₹)</label><input class="form-input" id="f-amt" type="number" placeholder="0"></div>
+    <div class="form-row"><label class="form-label">Status</label>
+      <select class="form-select" id="f-status"><option>Yet to Start</option><option>In Progress</option><option>Completed</option></select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addLocalTicket()">Create Ticket</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWRwNZi0-_0E48Gj__Mx3iyHq7Ezi4MlDh5PSvbzRJAp_clyDm9H6YhjRQbLKnt5edjA/exec";
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+let allProjects = [];
+let localTickets = [];
+let selectedId = null;
+let activeFilter = "All";
+let refreshTimer = null;
+let nextRefreshAt = null;
+let tickerInterval = null;
+
+// ── DATE HELPERS ──
+function parseDate(val) {
+  if (!val) return null;
+  const s = String(val).trim();
+  // ISO with T (from Google Sheets date cells): 2025-05-05T18:30:00.000Z
+  if (s.includes("T")) {
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+  // dd/mm/yyyy
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+    const [d,m,y] = s.split("/");
+    return new Date(y, m-1, d);
+  }
+  // yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+function fmtDate(val) {
+  const d = parseDate(val);
+  if (!d) return null;
+  return d.toLocaleDateString("en-IN", {day:"2-digit", month:"short", year:"numeric"});
+}
+
+function isDatePast(val) {
+  const d = parseDate(val);
+  if (!d) return false;
+  return d < new Date();
+}
+
+// ── COLUMN MAP (matches your sheet headers exactly) ──
+function parseRow(row) {
+  const pgRaw = (row["PG status"] || "").trim();
+  const pctRaw = row["Progress %"];
+  // treat 100% as full bar for completed projects
+  let pct = parseFloat(pctRaw);
+  if (isNaN(pct)) pct = null;
+
+  return {
+    num:          row["No"] || row["#"] || "",
+    id:           row["Project Number"] || row["No Project Number"] || "",
+    name:         row["Project Name"] || "",
+    type:         row["Type"] || "",
+    pct:          pct,
+    status:       row["Status"] || "In Progress",
+    start:        fmtDate(row["Start Date"]),
+    end:          fmtDate(row["End Date"]),
+    daysLeft:     parseInt(row["Days Left"]) || null,
+    zone:         row["Zone"] || "",
+    loc:          row["Location"] || "",
+    pm:           row["PM"] || null,
+    poa:          row["POA"] || null,
+    emStatus:     row["EMD"] || null,
+    pgStatus:     pgRaw,
+    pgAmt:        parseFloat(String(row["PG Amount"] || "0").replace(/,/g,"")) || 0,
+    pgClaimDate:  fmtDate(row["PG Claim Date"]),
+    pgClaimRaw:   row["PG Claim Date"] || null,
+    pgNeeded:     pgRaw.toLowerCase().includes("need"),
+    sdStatus:     row["SD Status"] || null,
+    sdAmt:        parseFloat(String(row["SD Amount"] || "0").replace(/,/g,"")) || 0,
+    sdClaimDate:  fmtDate(row["SD Claim Date (Alert)"]) || fmtDate(row["SD Claim Date"]),
+    sdClaimRaw:   row["SD Claim Date (Alert)"] || row["SD Claim Date"] || null,
+    total:        parseFloat(String(row["Total Amount"] || "0").replace(/,/g,"")) || 0,
+    billed:       parseFloat(String(row["Amount Billed"] || "0").replace(/,/g,"")) || 0,
+    balance:      parseFloat(String(row["Amount Balance"] || "0").replace(/,/g,"")) || 0,
+    balPct:       parseFloat(row["Balance %"]) || 0,
+    invoices:     row["Invoice Numbers"] || null,
+    milestones:   row["Milestones"] || null,
+    remarks:      row["Remarks"] || null,
+    fileNo:       row["File No/ LOA"] || null,
+    _local:       false
+  };
+}
+
+function fmt(n) {
+  if (!n || n === 0) return "—";
+  if (n >= 10000000) return "₹" + (n/10000000).toFixed(2) + "Cr";
+  if (n >= 100000)   return "₹" + (n/100000).toFixed(2) + "L";
+  return "₹" + n.toLocaleString("en-IN");
+}
+
+function fmtPct(p) {
+  if (p === null || p === undefined || isNaN(p)) return "—";
+  return Math.round(p) + "%";
+}
+
+// ── FETCH ──
+async function fetchData(manual = false) {
+  const btn = document.getElementById("refreshBtn");
+  btn.classList.add("spinning");
+  document.getElementById("statusText").textContent = "Fetching from Google Sheet...";
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + "?t=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const raw = await res.json();
+    allProjects = raw.filter(r => r["Project Name"] || r["Project Number"])
+                     .map(parseRow)
+                     .reverse(); // newest first
+    document.getElementById("statusText").textContent =
+      "Live · " + allProjects.length + " contracts loaded";
+  } catch (e) {
+    document.getElementById("statusText").textContent = "⚠ Could not reach Google Sheet — showing last data";
+    if (allProjects.length === 0) {
+      document.getElementById("boardGrid").innerHTML =
+        `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Could not load data.<br>Check CORS settings in Apps Script.</div>`;
+    }
+  }
+
+  btn.classList.remove("spinning");
+  document.getElementById("lastUpdate").textContent =
+    "Updated " + new Date().toLocaleTimeString("en-IN", {hour:"2-digit", minute:"2-digit"});
+
+  scheduleRefresh();
+  renderAll();
+}
+
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  nextRefreshAt = Date.now() + REFRESH_INTERVAL;
+  refreshTimer = setTimeout(() => fetchData(false), REFRESH_INTERVAL);
+  updateCountdown();
+}
+
+function updateCountdown() {
+  clearInterval(tickerInterval);
+  tickerInterval = setInterval(() => {
+    if (!nextRefreshAt) return;
+    const secs = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));
+    const m = Math.floor(secs / 60), s = secs % 60;
+    document.getElementById("nextRefreshText").textContent =
+      "Next: " + m + ":" + String(s).padStart(2, "0");
+  }, 1000);
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderKPIs();
+  renderFilters();
+  renderAlerts();
+  applyFilters();
+}
+
+// ── KPIs ──
+function renderKPIs() {
+  const all = [...allProjects, ...localTickets];
+  const completed = all.filter(p => p.status === "Completed").length;
+  const inprog    = all.filter(p => p.status === "In Progress").length;
+  const yts       = all.filter(p => p.status === "Yet to Start").length;
+  const total     = all.reduce((s,p) => s + p.total, 0);
+  const billed    = all.reduce((s,p) => s + p.billed, 0);
+  const balance   = all.reduce((s,p) => s + p.balance, 0);
+  const pgSum     = all.reduce((s,p) => s + p.pgAmt, 0);
+  const sdSum     = all.reduce((s,p) => s + p.sdAmt, 0);
+  const pgPend    = all.filter(p => (p.pgStatus||"").toLowerCase().includes("pending")).length;
+  const pgNeeded  = all.filter(p => p.pgNeeded).length;
+
+  document.getElementById("k-completed").textContent  = completed;
+  document.getElementById("k-inprog").textContent     = inprog;
+  document.getElementById("k-yts").textContent        = yts;
+  document.getElementById("k-total").textContent      = fmt(total);
+  document.getElementById("k-billed-sub").textContent = "billed " + fmt(billed);
+  document.getElementById("k-pg-total").textContent   = fmt(pgSum);
+  document.getElementById("k-sd-sub").textContent     = "SD: " + fmt(sdSum);
+  document.getElementById("k-pgpend").textContent     = pgPend;
+  document.getElementById("k-pg-sub").textContent     = pgNeeded + " need payment";
+  document.getElementById("k-balance").textContent    = fmt(balance);
+}
+
+// ── FILTERS ──
+function renderFilters() {
+  const bar = document.getElementById("filterBar");
+  const existing = bar.querySelectorAll(".filter-chip");
+  existing.forEach(e => e.remove());
+
+  const chips = ["All","In Progress","Completed","Yet to Start","ICF","SCR","SR","Open Bid","BQ"];
+  chips.forEach(f => {
+    const b = document.createElement("button");
+    b.className = "filter-chip" + (activeFilter === f ? " active" : "");
+    b.textContent = f;
+    b.onclick = () => { activeFilter = f; renderFilters(); applyFilters(); };
+    bar.appendChild(b);
+  });
+}
+
+// ── FILTER + SEARCH ──
+function applyFilters() {
+  const q = (document.getElementById("searchInput").value || "").toLowerCase();
+  const all = [...allProjects, ...localTickets];
+  const filtered = all.filter(p => {
+    const matchFilter =
+      activeFilter === "All" ||
+      p.status === activeFilter ||
+      p.zone === activeFilter ||
+      p.type === activeFilter;
+    const matchSearch = !q ||
+      (p.name||"").toLowerCase().includes(q) ||
+      (p.id||"").toLowerCase().includes(q) ||
+      (p.pm||"").toLowerCase().includes(q) ||
+      (p.zone||"").toLowerCase().includes(q) ||
+      (p.loc||"").toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+  renderBoard(filtered);
+}
+
+// ── BOARD ──
+function statusClass(s) {
+  if (s === "Completed") return "st-completed";
+  if (s === "In Progress") return "st-inprogress";
+  return "st-yettostart";
+}
+function badgeClass(s) {
+  if (s === "Completed") return "badge-completed";
+  if (s === "In Progress") return "badge-inprogress";
+  if (s === "Yet to Start") return "badge-yettostart";
+  return "badge-other";
+}
+function progClass(pct) {
+  if (!pct) return "prog-gray";
+  if (pct >= 80) return "prog-green";
+  if (pct >= 40) return "prog-blue";
+  return "prog-amber";
+}
+function pgDotClass(pgStatus) {
+  const s = (pgStatus||"").toLowerCase();
+  if (s.includes("paid")) return "dot-green";
+  if (s.includes("need")) return "dot-red";
+  return "dot-amber";
+}
+
+function renderBoard(list) {
+  document.getElementById("boardCount").textContent = list.length + " shown";
+  const grid = document.getElementById("boardGrid");
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>No tickets match your filter</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    // Fix: completed projects always show 100% full bar
+    const isCompleted = p.status === "Completed";
+    const displayPct = isCompleted ? 100 : (p.pct !== null && !isNaN(p.pct) ? p.pct : null);
+    const showPct    = isCompleted ? (p.pct !== null && !isNaN(p.pct) ? Math.round(p.pct) : 100) : (p.pct !== null && !isNaN(p.pct) ? Math.round(p.pct) : null);
+
+    const alertBanner = p.pgNeeded
+      ? `<div class="alert-banner">⚠ PG payment needed</div>` : "";
+    const localTag = p._local
+      ? `<span class="meta-tag" style="color:var(--purple)">Local</span>` : "";
+
+    // Fix: PG label — show "PG Paid", "PG Pending", "Need to Pay" etc properly
+    const pgLabel = p.pgStatus || "—";
+    const pgDot   = pgDotClass(p.pgStatus);
+
+    // Fix: show project value + number of contracts
+    const valueLabel = p.total ? fmt(p.total) : "—";
+
+    // SD claim date overdue warning on card
+    const sdOverdue = p.sdClaimRaw && isDatePast(p.sdClaimRaw) && p.sdStatus && !p.sdStatus.toLowerCase().includes("paid");
+    const sdBanner = sdOverdue
+      ? `<div class="alert-banner" style="margin-top:4px">⚠ SD Claim overdue: ${p.sdClaimDate}</div>` : "";
+
+    return `
+    <div class="ticket ${statusClass(p.status)}${selectedId===p.id?' selected':''}"
+         onclick="selectTicket('${p.id}')">
+      <div class="ticket-top">
+        <span class="ticket-id">${p.id || "—"}</span>
+        <span class="badge ${badgeClass(p.status)}">${p.status}</span>
+      </div>
+      ${alertBanner}${sdBanner}
+      <div class="ticket-name">${p.name}</div>
+      <div class="ticket-meta">
+        ${p.zone ? `<span class="meta-tag">${p.zone}</span>` : ""}
+        ${p.type ? `<span class="meta-tag">${p.type}</span>` : ""}
+        ${p.end ? `<span class="meta-tag">📅 ${p.end}</span>` : ""}
+        ${localTag}
+      </div>
+      ${displayPct !== null ? `
+        <div class="prog-wrap">
+          <div class="prog-label"><span>Progress</span><span>${showPct}%</span></div>
+          <div class="prog-bar"><div class="prog-fill ${isCompleted ? 'prog-green' : progClass(displayPct)}" style="width:${Math.min(displayPct,100)}%"></div></div>
+        </div>` : `<div style="height:8px"></div>`}
+      <div class="ticket-bottom">
+        <div class="pg-dot">
+          <div class="dot ${pgDot}"></div>
+          <span style="font-size:10px;color:var(--text3)">${pgLabel}</span>
+        </div>
+        <span class="ticket-amount">${valueLabel}</span>
+      </div>
+      ${p.pm ? `<div class="ticket-pm">👤 ${p.pm}${p.poa&&p.poa!==p.pm?' · '+p.poa:''}</div>` : ""}
+    </div>`;
+  }).join("") +
+  `<div class="add-card" onclick="openModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Add New Ticket
+  </div>`;
+}
+
+// ── ALERTS ──
+function renderAlerts() {
+  const all = [...allProjects, ...localTickets];
+  const alerts = [];
+
+  all.forEach(p => {
+    if (p.pgNeeded)
+      alerts.push({ dot: "dot-red", title: "PG Payment Needed", sub: `${p.id} · ${p.name}` });
+    if ((p.pgStatus||"").toLowerCase().includes("pending") && !p.pgNeeded)
+      alerts.push({ dot: "dot-amber", title: "PG Pending", sub: `${p.id} · ${p.name}` });
+    if (p.balance > 0 && p.status === "Completed")
+      alerts.push({ dot: "dot-amber", title: `Balance ${fmt(p.balance)} due`, sub: `${p.id} · ${p.name}` });
+    if (p.daysLeft !== null && p.daysLeft < 30 && p.status !== "Completed")
+      alerts.push({ dot: "dot-red", title: `Expiring in ${p.daysLeft}d`, sub: `${p.id} · ${p.name}` });
+    // Fix: SD Claim date overdue
+    if (p.sdClaimRaw && isDatePast(p.sdClaimRaw) && p.sdStatus && !p.sdStatus.toLowerCase().includes("paid"))
+      alerts.push({ dot: "dot-red", title: `SD Claim Overdue — ${p.sdClaimDate}`, sub: `${p.id} · ${p.name}` });
+    // PG claim date overdue
+    if (p.pgClaimRaw && isDatePast(p.pgClaimRaw) && !(p.pgStatus||"").toLowerCase().includes("paid"))
+      alerts.push({ dot: "dot-amber", title: `PG Claim Due — ${p.pgClaimDate}`, sub: `${p.id} · ${p.name}` });
+  });
+
+  const panel = document.getElementById("alertsPanel");
+  if (!alerts.length) {
+    panel.innerHTML = `<div class="detail-placeholder">✅ All clear — no action needed</div>`;
+    return;
+  }
+  panel.innerHTML = alerts.slice(0, 10).map(a => `
+    <div class="alert-item">
+      <div class="alert-dot ${a.dot}"></div>
+      <div class="alert-content">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-sub">${a.sub}</div>
+      </div>
+    </div>`).join("");
+}
+
+// ── SELECT TICKET ──
+function selectTicket(id) {
+  selectedId = id;
+  applyFilters();
+  const p = [...allProjects, ...localTickets].find(x => x.id === id);
+  if (!p) return;
+
+  const pgClass = (p.pgStatus||"").toLowerCase().includes("paid") ? "green" :
+                  (p.pgStatus||"").toLowerCase().includes("need") ? "red" : "amber";
+
+  const sdOverdue = p.sdClaimRaw && isDatePast(p.sdClaimRaw) && p.sdStatus && !p.sdStatus.toLowerCase().includes("paid");
+  const pgOverdue = p.pgClaimRaw && isDatePast(p.pgClaimRaw) && !(p.pgStatus||"").toLowerCase().includes("paid");
+
+  document.getElementById("detailPanel").innerHTML = `
+    <div style="margin-bottom:10px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:4px">${p.id||"—"}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--text);line-height:1.3">${p.name}</div>
+      ${p._local ? `<span class="meta-tag" style="color:var(--purple);margin-top:4px;display:inline-block">Local (not in sheet)</span>` : ""}
+    </div>
+    ${p.pgNeeded ? `<div class="alert-banner" style="margin-bottom:10px">⚠ PG payment needed urgently</div>` : ""}
+    ${sdOverdue ? `<div class="alert-banner" style="margin-bottom:10px">⚠ SD Claim overdue — ${p.sdClaimDate}</div>` : ""}
+
+    <div class="detail-section-head">Contract</div>
+    <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val">${p.type||"—"}</span></div>
+    <div class="detail-row"><span class="detail-key">Status</span><span class="detail-val"><span class="badge ${badgeClass(p.status)}">${p.status}</span></span></div>
+    <div class="detail-row"><span class="detail-key">Zone</span><span class="detail-val">${p.zone||"—"}</span></div>
+    <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${p.loc||"—"}</span></div>
+    ${p.fileNo ? `<div class="detail-row"><span class="detail-key">File/LOA</span><span class="detail-val">${p.fileNo}</span></div>` : ""}
+    ${p.start ? `<div class="detail-row"><span class="detail-key">Start</span><span class="detail-val">${p.start}</span></div>` : ""}
+    ${p.end ? `<div class="detail-row"><span class="detail-key">End</span><span class="detail-val">${p.end}</span></div>` : ""}
+    ${p.daysLeft !== null ? `<div class="detail-row"><span class="detail-key">Days Left</span><span class="detail-val ${p.daysLeft<30?"red":""}">${p.daysLeft}</span></div>` : ""}
+    ${p.pct !== null && !isNaN(p.pct) ? `<div class="detail-row"><span class="detail-key">Progress</span><span class="detail-val">${fmtPct(p.pct)}</span></div>` : ""}
+
+    <div class="detail-section-head">Team</div>
+    <div class="detail-row"><span class="detail-key">PM</span><span class="detail-val">${p.pm||"—"}</span></div>
+    <div class="detail-row"><span class="detail-key">POA</span><span class="detail-val">${p.poa||"—"}</span></div>
+    <div class="detail-row"><span class="detail-key">EMD</span><span class="detail-val">${p.emStatus||"—"}</span></div>
+
+    <div class="detail-section-head">Finance</div>
+    <div class="detail-row"><span class="detail-key">PG Status</span><span class="detail-val ${pgClass}">${p.pgStatus||"—"}</span></div>
+    ${p.pgAmt ? `<div class="detail-row"><span class="detail-key">PG Amount</span><span class="detail-val mono">${fmt(p.pgAmt)}</span></div>` : ""}
+    ${p.pgClaimDate ? `<div class="detail-row"><span class="detail-key">PG Claim Date</span><span class="detail-val ${pgOverdue?"red":""}">${p.pgClaimDate}${pgOverdue?' ⚠':''}</span></div>` : ""}
+    ${p.sdStatus ? `<div class="detail-row"><span class="detail-key">SD Status</span><span class="detail-val">${p.sdStatus}</span></div>` : ""}
+    ${p.sdAmt ? `<div class="detail-row"><span class="detail-key">SD Amount</span><span class="detail-val mono">${fmt(p.sdAmt)}</span></div>` : ""}
+    ${p.sdClaimDate ? `<div class="detail-row"><span class="detail-key">SD Claim Date</span><span class="detail-val ${sdOverdue?"red":""}">${p.sdClaimDate}${sdOverdue?' ⚠ Overdue':''}</span></div>` : ""}
+    <div class="detail-row"><span class="detail-key">Total Value</span><span class="detail-val mono">${fmt(p.total)}</span></div>
+    <div class="detail-row"><span class="detail-key">Billed</span><span class="detail-val mono">${fmt(p.billed)}</span></div>
+    <div class="detail-row"><span class="detail-key">Balance</span><span class="detail-val mono ${p.balance>0?"amber":""}">${fmt(p.balance)}${p.balPct?" ("+p.balPct.toFixed(1)+"%)":""}</span></div>
+    ${p.invoices ? `<div class="detail-row"><span class="detail-key">Invoices</span><span class="detail-val">${p.invoices}</span></div>` : ""}
+
+    ${p.milestones || p.remarks ? `
+    <div class="detail-section-head">Notes</div>
+    ${p.milestones ? `<div class="detail-row"><span class="detail-key">Milestones</span><span class="detail-val">${p.milestones}</span></div>` : ""}
+    ${p.remarks ? `<div class="detail-row"><span class="detail-key">Remarks</span><span class="detail-val">${p.remarks}</span></div>` : ""}
+    ` : ""}
+  `;
+}
+
+// ── MODAL ──
+function openModal() { document.getElementById("modalOverlay").style.display = "flex"; }
+function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
+function closeModalOutside(e) { if (e.target === document.getElementById("modalOverlay")) closeModal(); }
+
+let localCounter = 1;
+function addLocalTicket() {
+  const name = document.getElementById("f-name").value.trim();
+  if (!name) { alert("Project name is required"); return; }
+
+  const year = new Date().getFullYear();
+  const id = `SAM-${year}-L${localCounter++}`;
+  const amt = parseFloat(document.getElementById("f-amt").value) || 0;
+
+  localTickets.unshift({
+    id, name,
+    type:      document.getElementById("f-type").value,
+    pct:       null,
+    status:    document.getElementById("f-status").value,
+    start:     null, end: null, daysLeft: null,
+    zone:      document.getElementById("f-zone").value,
+    loc:       document.getElementById("f-loc").value || document.getElementById("f-zone").value,
+    pm:        document.getElementById("f-pm").value || null,
+    poa:       document.getElementById("f-poa").value || null,
+    emStatus:  "Waived",
+    pgStatus:  "PG Pending",
+    pgAmt:     0, pgNeeded: false,
+    sdStatus:  null, sdAmt: 0,
+    total:     amt, billed: 0, balance: amt, balPct: amt ? 100 : 0,
+    invoices:  null, milestones: null, remarks: "Locally added — add to Google Sheet to persist",
+    fileNo:    null, _local: true
+  });
+
+  closeModal();
+  ["f-name","f-pm","f-poa","f-amt","f-loc"].forEach(id => document.getElementById(id).value = "");
+  renderAll();
+}
+
+// ── NAV VIEW SWITCHING ──
+let currentView = "dashboard";
+function switchView(view) {
+  currentView = view;
+  // update nav icons
+  ["dashboard","contracts","finance","team"].forEach(v => {
+    const el = document.getElementById("nav-"+v);
+    if (el) el.classList.toggle("active", v === view);
+  });
+  // show/hide content
+  const dashContent = document.querySelector(".content");
+  const finView  = document.getElementById("view-finance");
+  const conView  = document.getElementById("view-contracts");
+  const teamView = document.getElementById("view-team");
+
+  dashContent.style.display  = view === "dashboard" ? "flex"  : "none";
+  finView.style.display      = view === "finance"   ? "flex"  : "none";
+  conView.style.display      = view === "contracts" ? "flex"  : "none";
+  teamView.style.display     = view === "team"      ? "flex"  : "none";
+
+  if (view === "finance")   renderFinanceView();
+  if (view === "contracts") renderContractsView();
+  if (view === "team")      renderTeamView();
+}
+
+// ── FINANCE VIEW ──
+function renderFinanceView() {
+  const all = [...allProjects, ...localTickets];
+  const totalVal  = all.reduce((s,p) => s+p.total, 0);
+  const totalBill = all.reduce((s,p) => s+p.billed, 0);
+  const totalBal  = all.reduce((s,p) => s+p.balance, 0);
+  const totalPG   = all.reduce((s,p) => s+p.pgAmt, 0);
+  const totalSD   = all.reduce((s,p) => s+p.sdAmt, 0);
+
+  document.getElementById("fin-total-label").textContent = "Total Portfolio: " + fmt(totalVal);
+  document.getElementById("finance-kpi-row").innerHTML = `
+    <div class="kpi kpi-rail"><div class="kpi-label">Total Contract Value</div><div class="kpi-val rail" style="font-size:20px">${fmt(totalVal)}</div><div class="kpi-sub">across ${all.length} contracts</div></div>
+    <div class="kpi kpi-green"><div class="kpi-label">Total Billed</div><div class="kpi-val green" style="font-size:20px">${fmt(totalBill)}</div><div class="kpi-sub">${totalVal?Math.round(totalBill/totalVal*100):0}% of portfolio</div></div>
+    <div class="kpi kpi-amber"><div class="kpi-label">Total Balance Due</div><div class="kpi-val amber" style="font-size:20px">${fmt(totalBal)}</div><div class="kpi-sub">to collect</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-label">Total PG Value</div><div class="kpi-val blue" style="font-size:20px">${fmt(totalPG)}</div><div class="kpi-sub">performance guarantee</div></div>
+    <div class="kpi kpi-purple"><div class="kpi-label">Total SD Value</div><div class="kpi-val purple" style="font-size:20px">${fmt(totalSD)}</div><div class="kpi-sub">security deposit</div></div>
+  `;
+
+  const TH = (t,align="left") => `<th style="padding:9px 12px;text-align:${align};font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)">${t}</th>`;
+  const TD = (t,align="left",cls="") => `<td style="padding:8px 12px;text-align:${align};border-bottom:1px solid var(--border);color:var(--text);font-family:${align==='right'?'var(--mono)':'var(--sans)'}" class="${cls}">${t}</td>`;
+
+  const rows = all.map(p => {
+    const sdOverdue = p.sdClaimRaw && isDatePast(p.sdClaimRaw) && p.sdStatus && !p.sdStatus.toLowerCase().includes("paid");
+    const pgClass = (p.pgStatus||"").toLowerCase().includes("paid") ? "color:var(--green)" :
+                    (p.pgStatus||"").toLowerCase().includes("need") ? "color:var(--red)" : "color:var(--amber)";
+    return `<tr style="cursor:pointer" onclick="switchView('dashboard');setTimeout(()=>selectTicket('${p.id}'),100)">
+      ${TD(`<span style="font-family:var(--mono);font-size:10px;color:var(--accent)">${p.id}</span>`)}
+      ${TD(p.name)}
+      ${TD(`<span class="badge ${badgeClass(p.status)}">${p.status}</span>`)}
+      ${TD(fmt(p.total),"right")}
+      ${TD(fmt(p.billed),"right")}
+      ${TD(fmt(p.balance),"right")}
+      ${TD(`<span style="${pgClass}">${p.pgStatus||"—"}</span>`)}
+      ${TD(fmt(p.pgAmt),"right")}
+      ${TD(fmt(p.sdAmt),"right")}
+      ${TD(p.sdClaimDate ? `<span style="${sdOverdue?"color:var(--red);font-weight:600":""}">${p.sdClaimDate}${sdOverdue?" ⚠":""}</span>` : "—")}
+    </tr>`;
+  }).join("");
+
+  document.getElementById("financeTable").innerHTML = `
+    <thead><tr>${TH("ID")}${TH("Project")}${TH("Status")}${TH("Total","right")}${TH("Billed","right")}${TH("Balance","right")}${TH("PG Status")}${TH("PG Amt","right")}${TH("SD Amt","right")}${TH("SD Claim Date")}</tr></thead>
+    <tbody>${rows}</tbody>
+  `;
+}
+
+// ── CONTRACTS LIST VIEW ──
+function renderContractsView() {
+  const all = [...allProjects, ...localTickets];
+  const TH = (t) => `<th style="padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface2)">${t}</th>`;
+  const TD = (t) => `<td style="padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);font-size:12px">${t}</td>`;
+  const rows = all.map(p => `
+    <tr style="cursor:pointer" onclick="switchView('dashboard');setTimeout(()=>selectTicket('${p.id}'),100)">
+      ${TD(`<span style="font-family:var(--mono);font-size:10px;color:var(--accent)">${p.id}</span>`)}
+      ${TD(p.name)}
+      ${TD(`<span class="badge ${badgeClass(p.status)}">${p.status}</span>`)}
+      ${TD(p.zone||"—")}
+      ${TD(p.type||"—")}
+      ${TD(p.pm||"—")}
+      ${TD(p.end||"—")}
+      ${TD(`<span style="font-family:var(--mono)">${fmt(p.total)}</span>`)}
+      ${TD(`<div class="pg-dot"><div class="dot ${pgDotClass(p.pgStatus)}"></div><span style="font-size:11px;color:var(--text2)">${p.pgStatus||"—"}</span></div>`)}
+    </tr>`).join("");
+  document.getElementById("contractsTable").innerHTML = `
+    <thead><tr>${TH("ID")}${TH("Project Name")}${TH("Status")}${TH("Zone")}${TH("Type")}${TH("PM")}${TH("End Date")}${TH("Value")}${TH("PG")}</tr></thead>
+    <tbody>${rows}</tbody>`;
+}
+
+// ── TEAM VIEW ──
+function renderTeamView() {
+  const all = [...allProjects, ...localTickets];
+  const pmMap = {};
+  all.forEach(p => {
+    const name = p.pm || "Unassigned";
+    if (!pmMap[name]) pmMap[name] = { name, projects:[], total:0, active:0, completed:0 };
+    pmMap[name].projects.push(p);
+    pmMap[name].total += p.total;
+    if (p.status === "Completed") pmMap[name].completed++;
+    else pmMap[name].active++;
+  });
+
+  const colors = ["var(--accent)","var(--green)","var(--amber)","var(--purple)","var(--red)"];
+  let i = 0;
+  document.getElementById("teamGrid").innerHTML = Object.values(pmMap).map(pm => {
+    const col = colors[i++ % colors.length];
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;border-top:2px solid ${col}">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px">👤 ${pm.name}</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:600;color:var(--accent);font-family:var(--mono)">${pm.active}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Active</div>
+        </div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:600;color:var(--green);font-family:var(--mono)">${pm.completed}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Done</div>
+        </div>
+        <div style="flex:1;background:var(--surface2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:14px;font-weight:600;color:var(--rail);font-family:var(--mono)">${fmt(pm.total)||"—"}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">Value</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Projects:</div>
+      ${pm.projects.slice(0,4).map(p=>`<div style="font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between"><span>${p.name}</span><span class="badge ${badgeClass(p.status)}" style="font-size:9px">${p.status}</span></div>`).join("")}
+      ${pm.projects.length>4?`<div style="font-size:10px;color:var(--text3);margin-top:4px">+${pm.projects.length-4} more</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+// ── INIT ──
+fetchData();
+</script>
+<!-- FUTURE ALERT MODAL -->
+<div class="fa-modal-overlay" id="faModalOverlay" style="display:none" onclick="if(event.target===this)closeFAModal()">
+  <div class="fa-modal">
+    <div class="fa-modal-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--accent)"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="fa-modal-heading">New Upcoming Alert</span>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Title / Description *</label>
+      <input class="form-input" id="fa-title" placeholder="e.g. Running Room Contract — SCR bid">
+    </div>
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div>
+        <label class="form-label">Zone / Category</label>
+        <select class="form-select" id="fa-zone">
+          <option value="">— None —</option>
+          <option>ICF</option><option>SCR</option><option>SR</option><option>MCF</option>
+          <option>Tender</option><option>Finance</option><option>Team</option><option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="fa-priority">
+          <option value="blue">Watch</option>
+          <option value="amber">Soon</option>
+          <option value="green">Info</option>
+          <option value="purple">Opportunity</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Expected Date</label>
+      <input class="form-input" id="fa-date" type="date">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Note (optional)</label>
+      <input class="form-input" id="fa-note" placeholder="e.g. Check IREPS portal around 15th">
+    </div>
+    <input type="hidden" id="fa-edit-id" value="">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeFAModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFAAlert()">Save Alert</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── FUTURE ALERTS ──
+const FA_KEY = "samhati_future_alerts";
+
+function loadFAAlerts() {
+  try { return JSON.parse(localStorage.getItem(FA_KEY)) || []; }
+  catch(e) { return []; }
+}
+function saveFAAlerts(arr) {
+  localStorage.setItem(FA_KEY, JSON.stringify(arr));
+}
+
+function renderFutureAlerts() {
+  const arr = loadFAAlerts();
+  const panel = document.getElementById("futureAlertsPanel");
+  const counter = document.getElementById("fa-count");
+  counter.textContent = arr.length ? arr.length + " alert" + (arr.length>1?"s":"") : "";
+
+  const sorted = [...arr].sort((a,b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(a.date) - new Date(b.date);
+  });
+
+  const items = sorted.map(a => {
+    const dateStr = a.date ? new Date(a.date + "T00:00:00").toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}) : "";
+    const daysAway = a.date ? Math.ceil((new Date(a.date+"T00:00:00") - new Date().setHours(0,0,0,0)) / 86400000) : null;
+    const daysLabel = daysAway !== null
+      ? (daysAway < 0 ? `<span style="color:var(--red)">${Math.abs(daysAway)}d overdue</span>`
+        : daysAway === 0 ? `<span style="color:var(--amber)">Today</span>`
+        : `<span>in ${daysAway}d</span>`)
+      : "";
+    return `
+      <div class="future-alert-item">
+        <div class="fa-dot fa-dot-${a.priority||"blue"}"></div>
+        <div class="fa-body">
+          <div class="fa-title">${a.title}</div>
+          <div class="fa-meta">
+            ${a.zone ? `<span class="fa-zone-tag">${a.zone}</span>` : ""}
+            ${dateStr ? `<span>📅 ${dateStr}</span>` : ""}
+            ${daysLabel}
+          </div>
+          ${a.note ? `<div style="font-size:10px;color:var(--text3);margin-top:3px;font-style:italic">${a.note}</div>` : ""}
+        </div>
+        <div class="fa-actions">
+          <button class="fa-btn" title="Edit" onclick="editFAAlert('${a.id}')">✏️</button>
+          <button class="fa-btn del" title="Delete" onclick="deleteFAAlert('${a.id}')">🗑</button>
+        </div>
+      </div>`;
+  }).join("");
+
+  panel.innerHTML = (items || `<div class="fa-empty">No upcoming alerts — add your first one below</div>`) +
+    `<button class="fa-add-btn" onclick="openFAModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><path d="M12 5v14M5 12h14"/></svg>
+      Add Alert
+    </button>`;
+}
+
+function openFAModal(id) {
+  document.getElementById("fa-modal-heading").textContent = id ? "Edit Alert" : "New Upcoming Alert";
+  document.getElementById("fa-edit-id").value = id || "";
+  if (id) {
+    const a = loadFAAlerts().find(x => x.id === id);
+    if (a) {
+      document.getElementById("fa-title").value = a.title || "";
+      document.getElementById("fa-zone").value  = a.zone  || "";
+      document.getElementById("fa-priority").value = a.priority || "blue";
+      document.getElementById("fa-date").value  = a.date  || "";
+      document.getElementById("fa-note").value  = a.note  || "";
+    }
+  } else {
+    ["fa-title","fa-zone","fa-date","fa-note"].forEach(i => document.getElementById(i).value = "");
+    document.getElementById("fa-priority").value = "blue";
+  }
+  document.getElementById("faModalOverlay").style.display = "flex";
+  setTimeout(() => document.getElementById("fa-title").focus(), 80);
+}
+function closeFAModal() {
+  document.getElementById("faModalOverlay").style.display = "none";
+}
+function editFAAlert(id) { openFAModal(id); }
+function deleteFAAlert(id) {
+  if (!confirm("Delete this alert?")) return;
+  saveFAAlerts(loadFAAlerts().filter(a => a.id !== id));
+  renderFutureAlerts();
+}
+function saveFAAlert() {
+  const title = document.getElementById("fa-title").value.trim();
+  if (!title) { alert("Please enter a title."); return; }
+  const arr = loadFAAlerts();
+  const editId = document.getElementById("fa-edit-id").value;
+  const payload = {
+    id: editId || "fa_" + Date.now(),
+    title,
+    zone:     document.getElementById("fa-zone").value,
+    priority: document.getElementById("fa-priority").value,
+    date:     document.getElementById("fa-date").value,
+    note:     document.getElementById("fa-note").value.trim(),
+    created:  editId ? (arr.find(a=>a.id===editId)||{}).created || Date.now() : Date.now()
+  };
+  if (editId) {
+    const idx = arr.findIndex(a => a.id === editId);
+    if (idx >= 0) arr[idx] = payload; else arr.push(payload);
+  } else {
+    arr.push(payload);
+  }
+  saveFAAlerts(arr);
+  closeFAModal();
+  renderFutureAlerts();
+}
+
+// render on page load
+document.addEventListener("DOMContentLoaded", renderFutureAlerts);
+renderFutureAlerts();
+</script>
+
+</body>
+</html>
